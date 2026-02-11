@@ -76,13 +76,19 @@ body {
 
 <div class="switch-box">
     <button type="button" id="btnLogin" class="active" onclick="showLogin()">Ieiet</button>
-<button type="button" id="btnRegister" onclick="showRegister()">Reģistrēties</button>
+    <button type="button" id="btnRegister" onclick="showRegister()">Reģistrēties</button>
 </div>
 
 <div class="card card-login">
 <div class="card-body p-4">
 
-<form method="POST" action = "/"> 
+{% if message %}
+<div class="alert alert-info text-center">
+    {{ message }}
+</div>
+{% endif %}
+
+<form method="POST" action="register">
 
 <input type="hidden" name="mode" id="mode" value="login">
 
@@ -111,8 +117,8 @@ body {
     <input type="password" name="parole" class="form-control" required>
 </div>
 
-<button type="submit" class="btn btn-login w-100">
-    Apstiprināt
+<button type="submit" id="submitBtn" class="btn btn-login w-100">
+    Ieiet
 </button>
 
 </form>
@@ -127,12 +133,15 @@ function showLogin() {
     document.getElementById("btnLogin").classList.add("active");
     document.getElementById("btnRegister").classList.remove("active");
     document.getElementById("mode").value = "login";
+    document.getElementById("submitBtn").innerText = "Ieiet";
 }
+
 function showRegister() {
     document.getElementById("registerFields").classList.remove("hidden");
     document.getElementById("btnRegister").classList.add("active");
     document.getElementById("btnLogin").classList.remove("active");
     document.getElementById("mode").value = "register";
+    document.getElementById("submitBtn").innerText = "Reģistrēties";
 }
 </script>
 
