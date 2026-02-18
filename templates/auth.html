@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="lv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Olimpiāžu Sistēma — Ieeja</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="auth-body">
+  <div class="auth-wrap">
+    <div class="auth-header">
+      <div class="cap-icon">🎓</div>
+      <h1>Olimpiāžu Sistēma</h1>
+      <p>Pieteikšanās skolēnu olimpiādēm</p>
+    </div>
+
+    <div class="card auth-card">
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="login">Ieiet</button>
+        <button class="tab-btn" data-tab="register">Reģistrēties</button>
+      </div>
+
+      {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+          <div class="flash-area">
+            {% for cat, msg in messages %}
+              <div class="flash {{ cat }}">{{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      
+      <div class="tab-panel active" id="tab-login">
+        <h2>Ieiet sistēmā</h2>
+        <p class="muted">Ievadi savu e-pastu un paroli</p>
+
+        <form method="post" action="{{ url_for('login') }}">
+          <label>E-pasts</label>
+          <input type="email" name="email" placeholder="tavs@epasts.lv" required />
+
+          <label>Parole</label>
+          <input type="password" name="password" placeholder="••••••••" required />
+
+          <button class="primary-btn" type="submit">Ieiet</button>
+        </form>
+
+        <div class="hint">
+          Admin konts (testam): <b>admin@skola.lv</b> / <b>Admin123!</b>
+        </div>
+      </div>
+
+
+      <div class="tab-panel" id="tab-register">
+        <h2>Reģistrēties</h2>
+        <p class="muted">Izveido jaunu skolēna kontu</p>
+
+        <form method="post" action="{{ url_for('register') }}">
+          <label>Vārds Uzvārds</label>
+          <input type="text" name="full_name" placeholder="Jānis Bērziņš" required />
+
+          <label>E-pasts</label>
+          <input type="email" name="email" placeholder="tavs@epasts.lv" required />
+
+          <label>Parole</label>
+          <input type="password" name="password" placeholder="vismaz 6 simboli" required />
+
+          <label>Klase</label>
+          <input type="text" name="class_name" placeholder="10.a" />
+
+          <button class="primary-btn" type="submit">Reģistrēties</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const tabBtns = document.querySelectorAll(".tab-btn");
+    const loginPanel = document.getElementById("tab-login");
+    const regPanel = document.getElementById("tab-register");
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        tabBtns.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const t = btn.dataset.tab;
+        if (t === "login") {
+          loginPanel.classList.add("active");
+          regPanel.classList.remove("active");
+        } else {
+          regPanel.classList.add("active");
+          loginPanel.classList.remove("active");
+        }
+      })
+    });
+  </script>
+</body>
+</html>

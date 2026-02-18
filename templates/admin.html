@@ -1,35 +1,98 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="lv">
 <head>
-<meta charset="UTF-8">
-<title>Admin Panelis</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — Olimpiādes</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body class="bg-light">
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🎓</div>
+      <div>
+        <div class="brand-title">Admin panelis</div>
+        <div class="brand-sub">Olimpiāžu pārvaldība</div>
+      </div>
+    </div>
 
-<div class="container py-4">
+    <div class="top-actions">
+      <a class="ghost-btn" href="{{ url_for('home') }}">Atpakaļ uz sākumu</a>
+      <a class="ghost-btn" href="{{ url_for('logout') }}">Iziet</a>
+    </div>
+  </header>
 
-<h3>Admin Panelis</h3>
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <div class="flash-area">
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
 
-<form method="POST" class="card p-3 mb-4">
-    <input name="nosaukums" class="form-control mb-2" placeholder="Nosaukums" required>
-    <input name="apraksts" class="form-control mb-2" placeholder="Apraksts" required>
-    <input name="prieksmets" class="form-control mb-2" placeholder="Priekšmets" required>
-    <input type="date" name="datums" class="form-control mb-2" required>
-    <input type="date" name="pieteiksanas" class="form-control mb-2" required>
-    <button class="btn btn-dark">Pievienot olimpiādi</button>
-</form>
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Pievienot jaunu olimpiādi</h2>
+      </div>
 
-<h5>Esošās olimpiādes</h5>
+      <div class="panel-body active">
+        <form method="post" action="{{ url_for('create_olympiad') }}" class="grid-form">
+          <div>
+            <label>Nosaukums</label>
+            <input name="title" placeholder="Matemātikas olimpiāde 2026" required />
+          </div>
+          <div>
+            <label>Priekšmets</label>
+            <input name="subject" placeholder="Matemātika" required />
+          </div>
+          <div class="full">
+            <label>Apraksts</label>
+            <textarea name="description" rows="3" required
+              placeholder="Īss apraksts par olimpiādi..."></textarea>
+          </div>
+          <div>
+            <label>Datums</label>
+            <input name="event_date" type="date" required />
+          </div>
+          <div>
+            <label>Līmenis</label>
+            <input name="level_name" placeholder="Skolas / Novada / Valsts" required />
+          </div>
+          <div>
+            <label>Pieteikšanās termiņš</label>
+            <input name="deadline" type="date" required />
+          </div>
+          <div class="full">
+            <button class="primary-btn" type="submit">Pievienot</button>
+          </div>
+        </form>
+      </div>
+    </section>
 
-{% for o in olimpiades %}
-<div class="card p-2 mb-2">
-    {{ o[1] }} ({{ o[3] }})
-</div>
-{% endfor %}
-
-<a href="/home" class="btn btn-secondary mt-3">Atpakaļ</a>
-
-</div>
+    <section class="panel" style="margin-top:18px;">
+      <div class="panel-head">
+        <h2>Esošās olimpiādes</h2>
+      </div>
+      <div class="panel-body active">
+        {% for o in olympiads %}
+          <article class="olymp-card">
+            <div class="olymp-main">
+              <h3>{{ o.title }}</h3>
+              <div class="meta">
+                <span>🏷️ {{ o.subject }}</span>
+                <span>📅 {{ o.event_date }}</span>
+                <span>⏰ Termiņš: {{ o.deadline }}</span>
+                <span>📌 Līmenis: {{ o.level_name }}</span>
+              </div>
+              <p class="muted" style="margin-top:10px;">{{ o.description }}</p>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
 </body>
 </html>

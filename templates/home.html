@@ -1,50 +1,255 @@
-<!DOCTYPE html>
-<html>
+<!doctype html>
+<html lang="lv">
 <head>
-<meta charset="UTF-8">
-<title>Home</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Olimpiāžu Sistēma — Sākums</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
-<body class="bg-light">
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-icon">🎓</div>
+      <div>
+        <div class="brand-title">Olimpiāžu Sistēma</div>
+        <div class="brand-sub">Sveicināts, {{ session.full_name }}!</div>
+      </div>
+    </div>
 
-<div class="container py-4">
+    <div class="top-actions">
+      {% if is_admin %}
+        <a class="ghost-btn" href="{{ url_for('admin') }}">Admin panelis</a>
+      {% endif %}
+      <a class="ghost-btn" href="{{ url_for('logout') }}">Iziet</a>
+    </div>
+  </header>
 
-<div class="d-flex justify-content-between mb-4">
-    <h3>Sveicināts, {{ vards }}!</h3>
-    <div>
-        {% if role == "admin" %}
-        <a href="/admin" class="btn btn-warning">Admin Panelis</a>
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <div class="flash-area">
+          {% for cat, msg in messages %}
+            <div class="flash {{ cat }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-title">Pieejamās olimpiādes</div>
+        <div class="stat-value">{{ olymp_count }}</div>
+        <div class="stat-note">Var pieteikties</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">Mani pieteikumi</div>
+        <div class="stat-value">{{ my_apps_count }}</div>
+        <div class="stat-note">Aktīvi pieteikumi</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-title">Tuvojas termiņš</div>
+        <div class="stat-value">{{ 1 if soonest_deadline else 0 }}</div>
+        <div class="stat-note">
+          {% if soonest_deadline %}
+            Nākamais: {{ soonest_deadline }}
+          {% else %}
+            Nav
+          {% endif %}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-tabs">
+        <button class="pill active" data-pane="available">Pieejamās olimpiādes ({{ olymp_count }})</button>
+        <button class="pill" data-pane="mine">Mani pieteikumi ({{ my_apps_count }})</button>
+      </div>
+
+
+      <div class="panel-body active" id="pane-available">
+        {% if olympiads|length == 0 %}
+          <div class="empty">
+            <div class="empty-icon">✓</div>
+            <div class="empty-title">Nav olimpiāžu</div>
+            <div class="empty-sub">Pašlaik nav pieejamu olimpiāžu.</div>
+          </div>
         {% endif %}
-        <a href="/logout" class="btn btn-outline-dark">Iziet</a>
+
+        {% for o in olympiads %}
+          <article class="olymp-card">
+            <div class="olymp-main">
+              <h3>{{ o.title }}</h3>
+              <p class="muted">{{ o.description }}</p>
+
+              <div class="meta">
+                <span>🏷️ {{ o.subject }}</span>
+                <span>📅 {{ o.event_date }}</span>
+                <span>⏰ Pieteikšanās līdz: {{ o.deadline }}</span>
+              </div>
+            </div>
+
+            <div class="olymp-actions">
+              {% if o.already_applied %}
+                <button class="secondary-btn" disabled>Jau pieteicies</button>
+              {% else %}
+                <button class="primary-btn"
+                        data-open-apply="1"
+                        data-olymp-id="{{ o.id }}"
+                        data-olymp-title="{{ o.title }}"
+                        data-olymp-subject="{{ o.subject }}"
+                        data-olymp-date="{{ o.event_date }}"
+                        data-olymp-level="{{ o.level_name }}"
+                        data-olymp-deadline="{{ o.deadline }}">
+                  Pieteikties
+                </button>
+              {% endif %}
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+
+      <div class="panel-body" id="pane-mine">
+        {% if my_apps|length == 0 %}
+          <div class="empty">
+            <div class="empty-icon">✓</div>
+            <div class="empty-title">Nav pieteikumu</div>
+            <div class="empty-sub">Tu vēl neesi pieteicies nevienai olimpiādei.</div>
+          </div>
+        {% endif %}
+
+        {% for a in my_apps %}
+          <article class="olymp-card">
+            <div class="olymp-main">
+              <h3>{{ a.title }}</h3>
+              <div class="meta">
+                <span>🏷️ {{ a.subject }}</span>
+                <span>📅 {{ a.event_date }}</span>
+                <span>⏰ Termiņš: {{ a.deadline }}</span>
+                <span>📌 Līmenis: {{ a.level_name }}</span>
+              </div>
+              <p class="muted" style="margin-top:10px;">
+                Iesniegts: {{ a.created_at[:19].replace('T',' ') }}
+              </p>
+            </div>
+            <div class="olymp-actions">
+              <button class="secondary-btn" disabled>Nosūtīts</button>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+
+
+  <div class="modal-backdrop" id="applyBackdrop" aria-hidden="true">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <div class="modal-title">Pieteikties olimpiādei</div>
+          <div class="modal-sub" id="applySubtitle"></div>
+        </div>
+        <button class="icon-btn" id="applyClose" aria-label="Aizvērt">✕</button>
+      </div>
+
+      <form method="post" action="{{ url_for('apply') }}" class="modal-body">
+        <input type="hidden" name="olympiad_id" id="olympiad_id" />
+
+        <label>Tava tālruņa numurs <span class="req">*</span></label>
+        <input name="student_phone" id="student_phone" placeholder="+371 20000000" required />
+
+        <label>Vecāka/aizbildņa vārds un uzvārds <span class="req">*</span></label>
+        <input name="guardian_name" id="guardian_name" placeholder="Māra Bērziņa" required />
+
+        <label>Vecāka/aizbildņa tālrunis <span class="req">*</span></label>
+        <input name="guardian_phone" id="guardian_phone" placeholder="+371 20000000" required />
+
+        <label>Motivācijas vēstule</label>
+        <textarea name="motivation" id="motivation" rows="4"
+          placeholder="Kāpēc vēlies piedalīties šajā olimpiādē? Kāda ir tava iepriekšējā pieredze?"></textarea>
+        <div class="muted small">Nav obligāti, bet var palīdzēt atlasei</div>
+
+        <div class="olymp-info">
+          <div class="info-title">Olimpiādes informācija:</div>
+          <div><b>Datums:</b> <span id="infoDate"></span></div>
+          <div><b>Līmenis:</b> <span id="infoLevel"></span></div>
+          <div><b>Pieteikšanās termiņš:</b> <span id="infoDeadline"></span></div>
+        </div>
+
+        <div class="modal-foot">
+          <button type="button" class="ghost-btn" id="applyCancel">Atcelt</button>
+          <button type="submit" class="primary-btn">Pieteikties</button>
+        </div>
+      </form>
     </div>
-</div>
+  </div>
 
-<h4>Pieejamās olimpiādes</h4>
+  <script>
 
-{% for o in olimpiades %}
-<div class="card p-3 mb-3">
-    <h5>{{ o[1] }}</h5>
-    <p>{{ o[2] }}</p>
-    <p>{{ o[3] }} | {{ o[4] }}</p>
-    <a href="/pieteikties/{{ o[0] }}" class="btn btn-dark">Pieteikties</a>
-</div>
-{% endfor %}
+    const pills = document.querySelectorAll(".pill");
+    const paneAvailable = document.getElementById("pane-available");
+    const paneMine = document.getElementById("pane-mine");
+    pills.forEach(p => p.addEventListener("click", () => {
+      pills.forEach(x => x.classList.remove("active"));
+      p.classList.add("active");
+      const target = p.dataset.pane;
+      if (target === "available") {
+        paneAvailable.classList.add("active");
+        paneMine.classList.remove("active");
+      } else {
+        paneMine.classList.add("active");
+        paneAvailable.classList.remove("active");
+      }
+    }));
 
-<hr>
 
-<h4>Mani pieteikumi</h4>
+    const backdrop = document.getElementById("applyBackdrop");
+    const closeBtn = document.getElementById("applyClose");
+    const cancelBtn = document.getElementById("applyCancel");
 
-{% if mani %}
-    {% for m in mani %}
-    <div class="card p-3 mb-3 bg-success text-white">
-        <h5>{{ m[1] }}</h5>
-        <p>{{ m[3] }} | {{ m[4] }}</p>
-    </div>
-    {% endfor %}
-{% else %}
-    <p>Nav pieteikumu.</p>
-{% endif %}
+    const subtitle = document.getElementById("applySubtitle");
+    const olympiadId = document.getElementById("olympiad_id");
 
-</div>
+    const infoDate = document.getElementById("infoDate");
+    const infoLevel = document.getElementById("infoLevel");
+    const infoDeadline = document.getElementById("infoDeadline");
+
+    function openModal(data) {
+      subtitle.textContent = `${data.title} — ${data.subject}`;
+      olympiadId.value = data.id;
+      infoDate.textContent = data.date;
+      infoLevel.textContent = data.level;
+      infoDeadline.textContent = data.deadline;
+
+      backdrop.classList.add("show");
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+
+    function closeModal() {
+      backdrop.classList.remove("show");
+      backdrop.setAttribute("aria-hidden", "true");
+    }
+
+    document.querySelectorAll("[data-open-apply='1']").forEach(btn => {
+      btn.addEventListener("click", () => {
+        openModal({
+          id: btn.dataset.olympId,
+          title: btn.dataset.olympTitle,
+          subject: btn.dataset.olympSubject,
+          date: btn.dataset.olympDate,
+          level: btn.dataset.olympLevel,
+          deadline: btn.dataset.olympDeadline
+        });
+      });
+    });
+
+    closeBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    backdrop.addEventListener("click", (e) => {
+      if (e.target === backdrop) closeModal();
+    });
+  </script>
 </body>
 </html>
