@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="lv">
 <head>
@@ -17,7 +18,7 @@
     </div>
 
     <div class="top-actions">
-      {% if is_admin %}
+      {% if role == 'admin' %}
         <a class="ghost-btn" href="{{ url_for('admin') }}">Admin panelis</a>
       {% endif %}
       <a class="ghost-btn" href="{{ url_for('logout') }}">Iziet</a>
@@ -35,115 +36,215 @@
       {% endif %}
     {% endwith %}
 
-    <section class="stats">
-      <div class="stat-card">
-        <div class="stat-title">Pieejamās olimpiādes</div>
-        <div class="stat-value">{{ olymp_count }}</div>
-        <div class="stat-note">Var pieteikties</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-title">Mani pieteikumi</div>
-        <div class="stat-value">{{ my_apps_count }}</div>
-        <div class="stat-note">Aktīvi pieteikumi</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-title">Tuvojas termiņš</div>
-        <div class="stat-value">{{ 1 if soonest_deadline else 0 }}</div>
-        <div class="stat-note">
-          {% if soonest_deadline %}
-            Nākamais: {{ soonest_deadline }}
-          {% else %}
-            Nav
-          {% endif %}
+    {% if role == 'student' %}
+      <section class="stats">
+        <div class="stat-card">
+          <div class="stat-title">Pieejamās olimpiādes</div>
+          <div class="stat-value">{{ olymp_count }}</div>
+          <div class="stat-note">Var pieteikties</div>
         </div>
-      </div>
-    </section>
 
-    <section class="panel">
-      <div class="panel-tabs">
-        <button class="pill active" data-pane="available">Pieejamās olimpiādes ({{ olymp_count }})</button>
-        <button class="pill" data-pane="mine">Mani pieteikumi ({{ my_apps_count }})</button>
-      </div>
+        <div class="stat-card">
+          <div class="stat-title">Mani pieteikumi</div>
+          <div class="stat-value">{{ my_apps_count }}</div>
+          <div class="stat-note">Aktīvi pieteikumi</div>
+        </div>
 
-
-      <div class="panel-body active" id="pane-available">
-        {% if olympiads|length == 0 %}
-          <div class="empty">
-            <div class="empty-icon">✓</div>
-            <div class="empty-title">Nav olimpiāžu</div>
-            <div class="empty-sub">Pašlaik nav pieejamu olimpiāžu.</div>
+        <div class="stat-card">
+          <div class="stat-title">Klases skolotājs</div>
+          <div class="stat-value stat-value-small">
+            {% if teacher_info %}
+              {{ teacher_info.full_name }}
+            {% else %}
+              Nav piesaistīts
+            {% endif %}
           </div>
-        {% endif %}
-
-        {% for o in olympiads %}
-          <article class="olymp-card">
-            <div class="olymp-main">
-              <h3>{{ o.title }}</h3>
-              <p class="muted">{{ o.description }}</p>
-
-              <div class="meta">
-                <span>🏷️ {{ o.subject }}</span>
-                <span>📅 {{ o.event_date }}</span>
-                <span>⏰ Pieteikšanās līdz: {{ o.deadline }}</span>
-              </div>
-            </div>
-
-            <div class="olymp-actions">
-              {% if o.already_applied %}
-                <button class="secondary-btn" disabled>Jau pieteicies</button>
-              {% else %}
-                <button class="primary-btn"
-                        data-open-apply="1"
-                        data-olymp-id="{{ o.id }}"
-                        data-olymp-title="{{ o.title }}"
-                        data-olymp-subject="{{ o.subject }}"
-                        data-olymp-date="{{ o.event_date }}"
-                        data-olymp-level="{{ o.level_name }}"
-                        data-olymp-deadline="{{ o.deadline }}">
-                  Pieteikties
-                </button>
-              {% endif %}
-            </div>
-          </article>
-        {% endfor %}
-      </div>
-
-
-      <div class="panel-body" id="pane-mine">
-        {% if my_apps|length == 0 %}
-          <div class="empty">
-            <div class="empty-icon">✓</div>
-            <div class="empty-title">Nav pieteikumu</div>
-            <div class="empty-sub">Tu vēl neesi pieteicies nevienai olimpiādei.</div>
+          <div class="stat-note">
+            {% if teacher_info and teacher_info.subject_name %}
+              {{ teacher_info.subject_name }}
+            {% endif %}
           </div>
-        {% endif %}
+        </div>
+      </section>
 
-        {% for a in my_apps %}
-          <article class="olymp-card">
-            <div class="olymp-main">
-              <h3>{{ a.title }}</h3>
-              <div class="meta">
-                <span>🏷️ {{ a.subject }}</span>
-                <span>📅 {{ a.event_date }}</span>
-                <span>⏰ Termiņš: {{ a.deadline }}</span>
-                <span>📌 Līmenis: {{ a.level_name }}</span>
+      <section class="panel">
+        <div class="panel-tabs">
+          <button class="pill active" data-pane="available">Pieejamās olimpiādes ({{ olymp_count }})</button>
+          <button class="pill" data-pane="mine">Mani pieteikumi ({{ my_apps_count }})</button>
+        </div>
+
+        <div class="panel-body active" id="pane-available">
+          {% if olympiads|length == 0 %}
+            <div class="empty">
+              <div class="empty-icon">✓</div>
+              <div class="empty-title">Nav pieejamu olimpiāžu</div>
+              <div class="empty-sub">Pašlaik nav nevienas olimpiādes ar aktīvu pieteikšanās termiņu.</div>
+            </div>
+          {% endif %}
+
+          {% for o in olympiads %}
+            <article class="olymp-card">
+              <div class="olymp-main">
+                <h3>{{ o.title }}</h3>
+                <p class="muted">{{ o.description }}</p>
+
+                <div class="meta">
+                  <span>🏷️ {{ o.subject }}</span>
+                  <span>📅 {{ o.event_date }}</span>
+                  <span>⏰ Pieteikšanās līdz: {{ o.deadline }}</span>
+                  <span>📌 {{ o.level_name }}</span>
+                </div>
               </div>
-              <p class="muted" style="margin-top:10px;">
-                Iesniegts: {{ a.created_at[:19].replace('T',' ') }}
-              </p>
+
+              <div class="olymp-actions">
+                {% if o.already_applied %}
+                  <button class="secondary-btn" disabled>Jau pieteicies</button>
+                {% else %}
+                  <button class="primary-btn"
+                          data-open-apply="1"
+                          data-olymp-id="{{ o.id }}"
+                          data-olymp-title="{{ o.title }}"
+                          data-olymp-subject="{{ o.subject }}"
+                          data-olymp-date="{{ o.event_date }}"
+                          data-olymp-level="{{ o.level_name }}"
+                          data-olymp-deadline="{{ o.deadline }}">
+                    Pieteikties
+                  </button>
+                {% endif %}
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+
+        <div class="panel-body" id="pane-mine">
+          {% if my_apps|length == 0 %}
+            <div class="empty">
+              <div class="empty-icon">✓</div>
+              <div class="empty-title">Nav pieteikumu</div>
+              <div class="empty-sub">Tu vēl neesi pieteicies nevienai olimpiādei.</div>
             </div>
-            <div class="olymp-actions">
-              <button class="secondary-btn" disabled>Nosūtīts</button>
+          {% endif %}
+
+          {% for a in my_apps %}
+            <article class="olymp-card">
+              <div class="olymp-main">
+                <h3>{{ a.title }}</h3>
+                <div class="meta">
+                  <span>🏷️ {{ a.subject }}</span>
+                  <span>📅 {{ a.event_date }}</span>
+                  <span>⏰ Termiņš: {{ a.deadline }}</span>
+                  <span>📌 {{ a.level_name }}</span>
+                </div>
+                <p class="muted" style="margin-top:10px;">
+                  Iesniegts: {{ a.created_at[:19].replace('T',' ') }}
+                </p>
+              </div>
+
+              <div class="olymp-actions action-column">
+                <button class="secondary-btn" disabled>Nosūtīts</button>
+
+                <form method="post" action="{{ url_for('cancel_application', application_id=a.id) }}">
+                  <button type="submit" class="danger-btn">Atcelt pieteikumu</button>
+                </form>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if role == 'teacher' %}
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Mani skolēni</h2>
+        </div>
+        <div class="panel-body active">
+          {% if students|length == 0 %}
+            <div class="empty">
+              <div class="empty-icon">✓</div>
+              <div class="empty-title">Nav piesaistītu skolēnu</div>
+              <div class="empty-sub">Šobrīd pie šī skolotāja nav piesaistīts neviens skolēns.</div>
             </div>
-          </article>
-        {% endfor %}
-      </div>
-    </section>
+          {% endif %}
+
+          {% for s in students %}
+            <article class="olymp-card">
+              <div class="olymp-main">
+                <h3>{{ s.full_name }}</h3>
+                <div class="meta">
+                  <span>🏫 Klase: {{ s.class_name }}</span>
+                  <span>✉️ {{ s.email }}</span>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="panel" style="margin-top:18px;">
+        <div class="panel-head">
+          <h2>Skolēnu pieteikumi</h2>
+        </div>
+        <div class="panel-body active">
+          {% if student_apps|length == 0 %}
+            <div class="empty">
+              <div class="empty-icon">✓</div>
+              <div class="empty-title">Nav pieteikumu</div>
+              <div class="empty-sub">Neviens skolēns vēl nav pieteicies olimpiādei.</div>
+            </div>
+          {% endif %}
+
+          {% for a in student_apps %}
+            <article class="olymp-card">
+              <div class="olymp-main">
+                <h3>{{ a.student_name }}</h3>
+                <p class="muted">{{ a.title }}</p>
+                <div class="meta">
+                  <span>🏷️ {{ a.subject }}</span>
+                  <span>🏫 {{ a.class_name }}</span>
+                  <span>📅 {{ a.event_date }}</span>
+                  <span>⏰ Termiņš: {{ a.deadline }}</span>
+                </div>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if role == 'admin' %}
+      <section class="stats">
+        <div class="stat-card">
+          <div class="stat-title">Skolotāji</div>
+          <div class="stat-value">{{ teacher_count }}</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Skolēni</div>
+          <div class="stat-value">{{ student_count }}</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-title">Pieteikumi</div>
+          <div class="stat-value">{{ application_count }}</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <h2>Administratora sākumlapa</h2>
+        </div>
+        <div class="panel-body active">
+          <p class="muted">
+            Izmanto admin paneli, lai pievienotu skolotājus, olimpiādes un lejupielādētu Excel atskaiti.
+          </p>
+          <a class="primary-link-btn" href="{{ url_for('admin') }}">Atvērt admin paneli</a>
+        </div>
+      </section>
+    {% endif %}
   </main>
 
-
+  {% if role == 'student' %}
   <div class="modal-backdrop" id="applyBackdrop" aria-hidden="true">
     <div class="modal">
       <div class="modal-head">
@@ -158,18 +259,17 @@
         <input type="hidden" name="olympiad_id" id="olympiad_id" />
 
         <label>Tava tālruņa numurs <span class="req">*</span></label>
-        <input name="student_phone" id="student_phone" placeholder="+371 20000000" required />
+        <input name="student_phone" placeholder="+371 20000000" required />
 
         <label>Vecāka/aizbildņa vārds un uzvārds <span class="req">*</span></label>
-        <input name="guardian_name" id="guardian_name" placeholder="Māra Bērziņa" required />
+        <input name="guardian_name" placeholder="Māra Bērziņa" required />
 
         <label>Vecāka/aizbildņa tālrunis <span class="req">*</span></label>
-        <input name="guardian_phone" id="guardian_phone" placeholder="+371 20000000" required />
+        <input name="guardian_phone" placeholder="+371 20000000" required />
 
         <label>Motivācijas vēstule</label>
-        <textarea name="motivation" id="motivation" rows="4"
-          placeholder="Kāpēc vēlies piedalīties šajā olimpiādē? Kāda ir tava iepriekšējā pieredze?"></textarea>
-        <div class="muted small">Nav obligāti, bet var palīdzēt atlasei</div>
+        <textarea name="motivation" rows="4" placeholder="Kāpēc vēlies piedalīties šajā olimpiādē?"></textarea>
+        <div class="muted small">Nav obligāti</div>
 
         <div class="olymp-info">
           <div class="info-title">Olimpiādes informācija:</div>
@@ -185,71 +285,73 @@
       </form>
     </div>
   </div>
+  {% endif %}
 
   <script>
-
     const pills = document.querySelectorAll(".pill");
     const paneAvailable = document.getElementById("pane-available");
     const paneMine = document.getElementById("pane-mine");
-    pills.forEach(p => p.addEventListener("click", () => {
-      pills.forEach(x => x.classList.remove("active"));
-      p.classList.add("active");
-      const target = p.dataset.pane;
-      if (target === "available") {
-        paneAvailable.classList.add("active");
-        paneMine.classList.remove("active");
-      } else {
-        paneMine.classList.add("active");
-        paneAvailable.classList.remove("active");
-      }
-    }));
 
+    pills.forEach(p => {
+      p.addEventListener("click", () => {
+        pills.forEach(x => x.classList.remove("active"));
+        p.classList.add("active");
+
+        if (p.dataset.pane === "available") {
+          paneAvailable.classList.add("active");
+          paneMine.classList.remove("active");
+        } else {
+          paneMine.classList.add("active");
+          paneAvailable.classList.remove("active");
+        }
+      });
+    });
 
     const backdrop = document.getElementById("applyBackdrop");
     const closeBtn = document.getElementById("applyClose");
     const cancelBtn = document.getElementById("applyCancel");
 
-    const subtitle = document.getElementById("applySubtitle");
-    const olympiadId = document.getElementById("olympiad_id");
+    if (backdrop && closeBtn && cancelBtn) {
+      const subtitle = document.getElementById("applySubtitle");
+      const olympiadId = document.getElementById("olympiad_id");
+      const infoDate = document.getElementById("infoDate");
+      const infoLevel = document.getElementById("infoLevel");
+      const infoDeadline = document.getElementById("infoDeadline");
 
-    const infoDate = document.getElementById("infoDate");
-    const infoLevel = document.getElementById("infoLevel");
-    const infoDeadline = document.getElementById("infoDeadline");
+      function openModal(data) {
+        subtitle.textContent = `${data.title} — ${data.subject}`;
+        olympiadId.value = data.id;
+        infoDate.textContent = data.date;
+        infoLevel.textContent = data.level;
+        infoDeadline.textContent = data.deadline;
+        backdrop.classList.add("show");
+        backdrop.setAttribute("aria-hidden", "false");
+      }
 
-    function openModal(data) {
-      subtitle.textContent = `${data.title} — ${data.subject}`;
-      olympiadId.value = data.id;
-      infoDate.textContent = data.date;
-      infoLevel.textContent = data.level;
-      infoDeadline.textContent = data.deadline;
+      function closeModal() {
+        backdrop.classList.remove("show");
+        backdrop.setAttribute("aria-hidden", "true");
+      }
 
-      backdrop.classList.add("show");
-      backdrop.setAttribute("aria-hidden", "false");
-    }
-
-    function closeModal() {
-      backdrop.classList.remove("show");
-      backdrop.setAttribute("aria-hidden", "true");
-    }
-
-    document.querySelectorAll("[data-open-apply='1']").forEach(btn => {
-      btn.addEventListener("click", () => {
-        openModal({
-          id: btn.dataset.olympId,
-          title: btn.dataset.olympTitle,
-          subject: btn.dataset.olympSubject,
-          date: btn.dataset.olympDate,
-          level: btn.dataset.olympLevel,
-          deadline: btn.dataset.olympDeadline
+      document.querySelectorAll("[data-open-apply='1']").forEach(btn => {
+        btn.addEventListener("click", () => {
+          openModal({
+            id: btn.dataset.olympId,
+            title: btn.dataset.olympTitle,
+            subject: btn.dataset.olympSubject,
+            date: btn.dataset.olympDate,
+            level: btn.dataset.olympLevel,
+            deadline: btn.dataset.olympDeadline
+          });
         });
       });
-    });
 
-    closeBtn.addEventListener("click", closeModal);
-    cancelBtn.addEventListener("click", closeModal);
-    backdrop.addEventListener("click", (e) => {
-      if (e.target === backdrop) closeModal();
-    });
+      closeBtn.addEventListener("click", closeModal);
+      cancelBtn.addEventListener("click", closeModal);
+      backdrop.addEventListener("click", (e) => {
+        if (e.target === backdrop) closeModal();
+      });
+    }
   </script>
 </body>
 </html>

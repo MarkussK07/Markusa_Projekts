@@ -30,7 +30,7 @@
         {% endif %}
       {% endwith %}
 
-      
+      <!-- LOGIN -->
       <div class="tab-panel active" id="tab-login">
         <h2>Ieiet sistēmā</h2>
         <p class="muted">Ievadi savu e-pastu un paroli</p>
@@ -46,29 +46,51 @@
         </form>
 
         <div class="hint">
-          Admin konts (testam): <b>admin@skola.lv</b> / <b>Admin123!</b>
+          Admin testa konts: <b>admin@skola.lv</b> / <b>Admin123!</b>
         </div>
       </div>
 
-
+      <!-- REGISTER -->
       <div class="tab-panel" id="tab-register">
         <h2>Reģistrēties</h2>
-        <p class="muted">Izveido jaunu skolēna kontu</p>
+        <p class="muted">Izveido jaunu kontu</p>
 
         <form method="post" action="{{ url_for('register') }}">
-          <label>Vārds Uzvārds</label>
-          <input type="text" name="full_name" placeholder="Jānis Bērziņš" required />
+          <label>Loma</label>
+          <select name="role" id="roleSelect" required>
+            <option value="student">Skolēns</option>
+            <option value="teacher">Skolotājs</option>
+          </select>
 
-          <label>E-pasts</label>
-          <input type="email" name="email" placeholder="tavs@epasts.lv" required />
+          <div id="studentFields">
+            <label>Vārds Uzvārds</label>
+            <input type="text" name="full_name" placeholder="Jānis Bērziņš" />
 
-          <label>Parole</label>
-          <input type="password" name="password" placeholder="vismaz 6 simboli" required />
+            <label>E-pasts</label>
+            <input type="email" name="email" placeholder="tavs@epasts.lv" />
 
-          <label>Klase</label>
-          <input type="text" name="class_name" placeholder="10.a" />
+            <label>Parole</label>
+            <input type="password" name="password" placeholder="vismaz 6 simboli" />
 
-          <button class="primary-btn" type="submit">Reģistrēties</button>
+            <label>Klase</label>
+            <input type="text" name="class_name" placeholder="10.a" />
+
+            <label>Klases skolotājs</label>
+            <select name="teacher_id">
+              <option value="">-- Izvēlies skolotāju --</option>
+              {% for teacher in teachers %}
+                <option value="{{ teacher.id }}">
+                  {{ teacher.full_name }}{% if teacher.subject_name %} — {{ teacher.subject_name }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+
+            <button class="primary-btn" type="submit">Reģistrēties</button>
+          </div>
+
+          <div id="teacherInfo" class="hint" style="display:none; margin-top:12px;">
+            Skolotāju kontus veido administrators. Sazinies ar adminu, lai saņemtu savu e-pastu un paroli.
+          </div>
         </form>
       </div>
     </div>
@@ -77,23 +99,39 @@
   <script>
     const tabBtns = document.querySelectorAll(".tab-btn");
     const loginPanel = document.getElementById("tab-login");
-    const regPanel = document.getElementById("tab-register");
+    const registerPanel = document.getElementById("tab-register");
 
     tabBtns.forEach(btn => {
       btn.addEventListener("click", () => {
         tabBtns.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
 
-        const t = btn.dataset.tab;
-        if (t === "login") {
+        if (btn.dataset.tab === "login") {
           loginPanel.classList.add("active");
-          regPanel.classList.remove("active");
+          registerPanel.classList.remove("active");
         } else {
-          regPanel.classList.add("active");
+          registerPanel.classList.add("active");
           loginPanel.classList.remove("active");
         }
-      })
+      });
     });
+
+    const roleSelect = document.getElementById("roleSelect");
+    const studentFields = document.getElementById("studentFields");
+    const teacherInfo = document.getElementById("teacherInfo");
+
+    function toggleRoleFields() {
+      if (roleSelect.value === "teacher") {
+        studentFields.style.display = "none";
+        teacherInfo.style.display = "block";
+      } else {
+        studentFields.style.display = "block";
+        teacherInfo.style.display = "none";
+      }
+    }
+
+    roleSelect.addEventListener("change", toggleRoleFields);
+    toggleRoleFields();
   </script>
 </body>
 </html>

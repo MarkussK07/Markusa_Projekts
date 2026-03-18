@@ -12,7 +12,7 @@
       <div class="brand-icon">🎓</div>
       <div>
         <div class="brand-title">Admin panelis</div>
-        <div class="brand-sub">Olimpiāžu pārvaldība</div>
+        <div class="brand-sub">Olimpiāžu un skolotāju pārvaldība</div>
       </div>
     </div>
 
@@ -35,6 +35,36 @@
 
     <section class="panel">
       <div class="panel-head">
+        <h2>Pievienot skolotāju</h2>
+      </div>
+
+      <div class="panel-body active">
+        <form method="post" action="{{ url_for('create_teacher') }}" class="grid-form">
+          <div>
+            <label>Vārds Uzvārds</label>
+            <input name="full_name" placeholder="Ilze Kalniņa" required />
+          </div>
+          <div>
+            <label>E-pasts</label>
+            <input name="email" type="email" placeholder="ilze.kalnina@skola.lv" required />
+          </div>
+          <div>
+            <label>Priekšmets</label>
+            <input name="subject_name" placeholder="Matemātika" required />
+          </div>
+          <div>
+            <label>Parole</label>
+            <input name="password" type="text" placeholder="Izveido paroli" required />
+          </div>
+          <div class="full">
+            <button class="primary-btn" type="submit">Pievienot skolotāju</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:18px;">
+      <div class="panel-head">
         <h2>Pievienot jaunu olimpiādi</h2>
       </div>
 
@@ -50,8 +80,7 @@
           </div>
           <div class="full">
             <label>Apraksts</label>
-            <textarea name="description" rows="3" required
-              placeholder="Īss apraksts par olimpiādi..."></textarea>
+            <textarea name="description" rows="3" placeholder="Īss apraksts par olimpiādi..." required></textarea>
           </div>
           <div>
             <label>Datums</label>
@@ -66,9 +95,72 @@
             <input name="deadline" type="date" required />
           </div>
           <div class="full">
-            <button class="primary-btn" type="submit">Pievienot</button>
+            <button class="primary-btn" type="submit">Pievienot olimpiādi</button>
           </div>
         </form>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:18px;">
+      <div class="panel-head">
+        <h2>Lejupielādēt Excel atskaiti</h2>
+      </div>
+
+      <div class="panel-body active">
+        <form method="get" action="{{ url_for('export_applications') }}" class="grid-form">
+          <div>
+            <label>Filtrēt pēc priekšmeta</label>
+            <select name="subject">
+              <option value="">Visi priekšmeti</option>
+              {% for subject in subjects %}
+                <option value="{{ subject.subject }}">{{ subject.subject }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div>
+            <label>Filtrēt pēc skolotāja</label>
+            <select name="teacher_id">
+              <option value="">Visi skolotāji</option>
+              {% for teacher in teachers %}
+                <option value="{{ teacher.id }}">
+                  {{ teacher.full_name }}{% if teacher.subject_name %} — {{ teacher.subject_name }}{% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="full">
+            <button class="primary-btn" type="submit">Lejupielādēt Excel</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:18px;">
+      <div class="panel-head">
+        <h2>Esošie skolotāji</h2>
+      </div>
+      <div class="panel-body active">
+        {% if teachers|length == 0 %}
+          <div class="empty">
+            <div class="empty-icon">✓</div>
+            <div class="empty-title">Nav skolotāju</div>
+            <div class="empty-sub">Vēl nav pievienots neviens skolotājs.</div>
+          </div>
+        {% endif %}
+
+        {% for teacher in teachers %}
+          <article class="olymp-card">
+            <div class="olymp-main">
+              <h3>{{ teacher.full_name }}</h3>
+              <div class="meta">
+                <span>✉️ {{ teacher.email }}</span>
+                <span>📘 {{ teacher.subject_name }}</span>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
       </div>
     </section>
 
@@ -85,7 +177,7 @@
                 <span>🏷️ {{ o.subject }}</span>
                 <span>📅 {{ o.event_date }}</span>
                 <span>⏰ Termiņš: {{ o.deadline }}</span>
-                <span>📌 Līmenis: {{ o.level_name }}</span>
+                <span>📌 {{ o.level_name }}</span>
               </div>
               <p class="muted" style="margin-top:10px;">{{ o.description }}</p>
             </div>
